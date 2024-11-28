@@ -8,7 +8,7 @@ import { MdOutlineMail } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation , useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "../../../constant/url";
 import toast from "react-hot-toast";
 
@@ -22,32 +22,35 @@ const SignUpPage = () => {
 		password: "",
 	});
 
-	const {signup , isPending , isError , error} = useMutation({
-		mutationFn : async ({email , username ,fullName,password})=>{
-			try {
-				const res = await fetch(`${baseUrl}/api/auth/signup`,{
-					method :"POST",
-					credentials : "include",
-					headers : {
-						"Content-Type ":"application/json",
-						"Accept" : "application/json"
-					},
-					body : JSON.stringify({email , username ,fullName,password})
-				})
-				const data = await res.json();
-				if(!res.ok){
-					throw new Error(data.error ||"Something went wrong");
-				}
-			
-			} catch (error) {
-				{/*console.log(error);*/}
-				throw error;
+	const queryClient = useQueryClient();
+
+	const { mutate: signup, isPending, isError, error } = useMutation({
+		mutationFn: async ({ email, username, fullName, password }) => {
+		  try {
+			const res = await fetch(`${baseUrl}/api/auth/signup`, {
+			  method: "POST",
+			  credentials: "include",
+			  headers: {
+				"Content-Type": "application/json",
+				"Accept": "application/json",
+			  },
+			  body: JSON.stringify({ email, username, fullName, password }),
+			});
+			const data = await res.json();
+			if (!res.ok) {
+			  throw new Error(data.error || "Something went wrong");
 			}
+		  } catch (error) {
+			throw error;
+		  }
+		 
 		},
-		onSuccess: ()=>{
-			toast.success("User created Successfully !");
-		}
-	});	
+		onSuccess: () => {
+		  toast.success("User created Successfully!");
+		  queryClient.invalidateQueries({queryKey:["authUser"]});
+		},
+	  });
+		  
 
 	const handleSubmit = (e) => {
 		e.preventDefault(); // page won't reload
